@@ -1,1 +1,102 @@
-# Python-API-With-FastAPI Tutorial
+# Python-API-With-FastAPI Tutorial => https://www.youtube.com/watch?v=lWsGhG6N_1E&t=2s&ab_channel=TechWithTim
+
+#! Summary
+0. Understanding APIs: APIs serve as intermediaries for software interactions, enabling data requests and exchanges between different systems, similar to a waiter in a restaurant.
+
+This summary encapsulates the fundamental concepts and practical applications covered in the notes related to creating a Python API with FastAPI and understanding API basics and CRUD methods.  
+
+1. FastAPI converts python objects to and from json.
+2. Validate different requests.
+3. Ensure correct data types are provided.
+4. Create a basic template
+"
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/")
+def read_ayush():
+    return {"Ayush": "Senapati"}
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+"
+5. Go to localhost:8000/docs and localhost:8000/redoc to explore the documentation.
+6. For realtime data, we will connect our app to a real database but for this project, we will be using an in-memory database. Use tasks=[] and use pydantic to create a Task model.
+7. We will use uuid to generate unique IDs for our tasks.
+8. Model for this project, here is the schema:
+"
+class Task(BaseModel):
+    id: Optional[UUID] = None
+    title: str
+    description: Optional[str] = None
+    completed: bool = False
+"
+9. For the model, the id is a field, then we define whether the field is optional or not, then the type of the field, and the default value if it is not provided. The title field is a required field.
+10. Now to add data, we will build a post request
+"
+@app.post("/tasks/", response_model=Task)
+def create_task(task: Task):
+    task.id = uuid4()
+    tasks.append(task)
+    return task
+"
+11. The model will automatically check if all the required fields are provided and the data types are correct. If the data is valid, it will be added to the tasks list. If the data is invalid, an error will be raised.
+"
+Error: Unprocessable Entity
+Response body
+
+{
+  "detail": [
+    {
+      "type": "missing",
+      "loc": [
+        "body",
+        "title"
+      ],
+      "msg": "Field required",
+      "input": {}
+    }
+  ]
+}
+"
+12. Build a get request to get all tasks
+"
+@app.get("/tasks/", response_model=List[Task])
+def read_tasks():
+    return tasks
+"
+13. Build a get request to get a specific task
+"
+@app.get("/tasks/{task_id}", response_model=Task)
+def read_task(task_id: UUID):
+    for task in tasks:
+        if task.id == task_id:
+            return task
+
+    raise HTTPException(status_code=404, detail="Task not found")
+"
+14. Build a put request to update a specific task
+"
+@app.put("/tasks/{task_id}", response_model=Task)
+def update_task(task_id: UUID, task_update: Task):
+    for idx, task in enumerate(tasks):
+        if task.id == task_id:
+            updated_task = task.copy(update=task_update.model_dump(exclude_unset=True))
+            tasks[idx] = updated_task
+            return updated_task
+
+    raise HTTPException(status_code=404, detail="Task not found")
+"
+15. Build a delete request to delete a specific task
+"
+@app.delete("/tasks/{task_id}", response_model=Task)
+def delete_task(task_id: UUID):
+    for idx, task in enumerate(tasks):
+        if task.id == task_id:
+            return tasks.pop(idx)
+
+    raise HTTPException(status_code=404, detail="Task not found")
+"
